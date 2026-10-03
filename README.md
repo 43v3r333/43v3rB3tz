@@ -1,4 +1,8 @@
-# New Version (Release 03-17-2026)
+# 43v3r Bets
+
+Football data, prediction research, and system monitoring. Derived from ProphitBet; original authorship and license notices are retained below and in LICENSE.txt.
+
+## Upstream release notes (03-17-2026)
 
 Once again, thank you for your support and your valuable feedback. The new release includes the following updates:
 

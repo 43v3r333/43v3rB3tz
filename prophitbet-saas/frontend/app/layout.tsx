@@ -12,7 +12,7 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "ProphitBet — Soccer predictions & analysis",
+  title: "43v3r Bets — Soccer predictions & analysis",
   description:
     "Match predictions across 36+ leagues, statistical analysis, and custom models—built for people who read the numbers.",
 };

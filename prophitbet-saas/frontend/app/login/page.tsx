@@ -40,7 +40,7 @@ export default function LoginPage() {
         <div className="anim-reveal-section w-full max-w-md">
           <div className="anim-reveal-inner card w-full">
             <h1 className="text-2xl font-bold text-zinc-50 mb-2">Welcome back</h1>
-            <p className="text-zinc-400 mb-8">Sign in to your ProphitBet account</p>
+            <p className="text-zinc-400 mb-8">Sign in to your 43v3r Bets account</p>
 
             {error && (
               <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400">

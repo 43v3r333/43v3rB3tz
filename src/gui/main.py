@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
 
         self._app = app
 
-        self._title = 'ProphitBet-v2'
+        self._title = '43v3r Bets'
         self._width = 800
         self._height = 600
 
@@ -647,7 +647,7 @@ class MainWindow(QMainWindow):
         QMessageBox.information(
             self,
             'Welcome Notification',
-            'Thank you for using ProphitBet-v2. '
+            'Thank you for using 43v3r Bets. '
                  'This is an open-source, non-profit application. I am not responsible for any losses. '
                  'Please Bet Responsibly!'
         )

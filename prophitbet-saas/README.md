@@ -1,4 +1,4 @@
-# ProphitBet SaaS Platform
+# 43v3r Bets SaaS Platform
 
 AI-powered soccer predictions SaaS platform with freemium monetization. Built on top of the ProphitBet ML engine.
 

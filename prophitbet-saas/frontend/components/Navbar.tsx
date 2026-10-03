@@ -32,7 +32,7 @@ export default function Navbar() {
               PB
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[15px] font-semibold tracking-tight text-zinc-50">ProphitBet</span>
+              <span className="text-[15px] font-semibold tracking-tight text-zinc-50">43v3r Bets</span>
               {user && (
                 <span className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-medium text-zinc-400 bg-zinc-800/80 rounded border border-zinc-700/60">
                   SaaS

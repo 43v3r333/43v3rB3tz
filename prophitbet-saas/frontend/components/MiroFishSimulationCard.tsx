@@ -258,7 +258,7 @@ export default function MiroFishSimulationCard({
         <div className="space-y-6">
           {/* 3-Way Probability Comparison */}
           <div className="grid md:grid-cols-3 gap-4">
-            {/* 1. ProphitBet ML */}
+            {/* 1. 43v3r Bets ML */}
             <div className="p-4 rounded-xl bg-zinc-800/40 border border-zinc-750 flex flex-col justify-between">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">

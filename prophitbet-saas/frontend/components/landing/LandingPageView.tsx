@@ -114,7 +114,7 @@ export default function LandingPageView() {
       <footer className="border-t border-zinc-700/90 py-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row">
           <p className="text-center text-sm text-zinc-500 sm:text-left">
-            ProphitBet &copy; {new Date().getFullYear()}. For entertainment only—not betting or financial advice.
+            43v3r Bets &copy; {new Date().getFullYear()}. For entertainment only—not betting or financial advice.
           </p>
           <div className="flex gap-6 text-sm text-zinc-500">
             <Link href="/pricing" className="transition-colors hover:text-zinc-300">

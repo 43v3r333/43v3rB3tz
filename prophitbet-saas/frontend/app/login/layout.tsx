@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign In — ProphitBet",
-  description: "Sign in to your ProphitBet account to access AI soccer predictions and analysis tools.",
+  title: "Sign In — 43v3r Bets",
+  description: "Sign in to your 43v3r Bets account to access AI soccer predictions and analysis tools.",
 };
 
 export default function LoginLayout({ children }: { children: React.ReactNode }) {
