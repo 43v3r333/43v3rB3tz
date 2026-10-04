@@ -30,7 +30,7 @@ def global_exception_hook(exc_type, exc_value, exc_tb):
 
 def main():
     logger = logging.getLogger(__name__)
-    logger.info("Starting 43v3r Bets application")
+    logger.info("Starting 43v3rB3tz application")
 
     # Initializing app window.
     app = QApplication(sys.argv)

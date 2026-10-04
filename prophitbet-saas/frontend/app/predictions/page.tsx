@@ -254,10 +254,7 @@ function PredictionsContent() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-zinc-50">Predictions Hub</h1>
-            <span className="badge bg-emerald-500/10 text-emerald-400 border-emerald-500/30">
-              AI-Powered
-            </span>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-50">Predictions</h1>
           </div>
           <p className="text-zinc-400 text-sm mt-1">
             One entry per match. Expand market predictions for probabilities and individual details.
@@ -302,7 +299,7 @@ function PredictionsContent() {
             <svg className="w-4 h-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
             </svg>
-            All Leagues Directory
+            Browse leagues
           </Link>
         </div>
       </div>
@@ -521,7 +518,7 @@ function PredictionsContent() {
       {loading ? (
         <div className="card text-center py-16 text-zinc-400">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500 mb-3" />
-          <p>Loading predictions with AI probabilities...</p>
+          <output>Loading match predictions…</output>
         </div>
       ) : filteredPredictions.length === 0 ? (
         <div className="card text-center py-16 text-zinc-400 space-y-3">

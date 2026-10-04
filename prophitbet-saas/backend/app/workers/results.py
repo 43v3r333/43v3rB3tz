@@ -213,7 +213,6 @@ def _find_match_result(df, home_team: str, away_team: str, match_date=None, mark
         if df.empty:
             return None
 
-    import difflib
     import pandas as pd
     from backend.app.services.team_mapping import normalize_team_name
 
@@ -230,8 +229,8 @@ def _find_match_result(df, home_team: str, away_team: str, match_date=None, mark
         return None
 
     uniq_teams = list(set(df[home_col].dropna().unique()).union(set(df[away_col].dropna().unique())))
-    norm_home = normalize_team_name(home_team, uniq_teams) or home_team
-    norm_away = normalize_team_name(away_team, uniq_teams) or away_team
+    norm_home = normalize_team_name(home_team, uniq_teams, allow_fuzzy=False) or home_team
+    norm_away = normalize_team_name(away_team, uniq_teams, allow_fuzzy=False) or away_team
 
     mask = (
         ((df[home_col].astype(str).str.lower() == norm_home.lower()) | (df[home_col].astype(str).str.lower() == home_team.lower())) &
@@ -239,13 +238,6 @@ def _find_match_result(df, home_team: str, away_team: str, match_date=None, mark
     )
 
     matches = df[mask]
-    if matches.empty:
-        close_h = difflib.get_close_matches(home_team, uniq_teams, n=1, cutoff=0.65)
-        close_a = difflib.get_close_matches(away_team, uniq_teams, n=1, cutoff=0.65)
-        if close_h and close_a:
-            fuzzy_mask = (df[home_col] == close_h[0]) & (df[away_col] == close_a[0])
-            matches = df[fuzzy_mask]
-
     if matches.empty:
         return None
 
@@ -266,6 +258,12 @@ def _find_match_result(df, home_team: str, away_team: str, match_date=None, mark
     except Exception:
         return None
 
+    if not hg_col or not ag_col:
+        return None
+    evidence_columns = [res_col, hg_col, ag_col]
+    if len(matches[evidence_columns].drop_duplicates()) != 1:
+        logger.warning("Rejected conflicting source results for the same fixture")
+        return None
     row = matches.iloc[-1]
     res_val = str(row[res_col]).strip().upper()
     if res_val not in ("H", "D", "A"):
@@ -273,7 +271,14 @@ def _find_match_result(df, home_team: str, away_team: str, match_date=None, mark
 
     if not hg_col or not ag_col or pd.isna(row.get(hg_col)) or pd.isna(row.get(ag_col)):
         return None
-    home_goals, away_goals = int(row[hg_col]), int(row[ag_col])
+    import math
+    try:
+        scores = [float(row[hg_col]), float(row[ag_col])]
+    except (TypeError, ValueError):
+        return None
+    if not all(math.isfinite(score) and score >= 0 and score.is_integer() for score in scores):
+        return None
+    home_goals, away_goals = map(int, scores)
     score_result = "H" if home_goals > away_goals else ("A" if away_goals > home_goals else "D")
     if score_result != res_val:
         logger.warning("Rejected inconsistent result row: score=%s-%s result=%s", home_goals, away_goals, res_val)

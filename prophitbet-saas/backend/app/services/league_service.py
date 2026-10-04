@@ -11,6 +11,23 @@ from backend.app.db.models import League, LeagueDataset
 logger = logging.getLogger(__name__)
 
 
+def bucket_owner_condition(settings):
+    """Require an explicit account for AWS; private S3-compatible stores may omit it."""
+    from urllib.parse import urlparse
+    endpoint = settings.S3_ENDPOINT
+    host = urlparse(endpoint).hostname if endpoint else None
+    owner = settings.S3_EXPECTED_BUCKET_OWNER.strip()
+    is_aws = not endpoint or (host and (
+        host.endswith('.amazonaws.com') or host.endswith('.amazonaws.com.cn')))
+    if owner:
+        if len(owner) != 12 or not owner.isascii() or not owner.isdigit():
+            raise ValueError('S3_EXPECTED_BUCKET_OWNER must be a 12-digit AWS account ID')
+        return {'ExpectedBucketOwner': owner}
+    if is_aws:
+        raise ValueError('S3_EXPECTED_BUCKET_OWNER is required for AWS S3')
+    return {}
+
+
 def ensure_s3_bucket_sync() -> None:
     """Create the configured S3/MinIO bucket if missing (for API startup and Celery workers)."""
     import boto3
@@ -64,7 +81,7 @@ def dataset_objects_status(keys):
         if not key:
             return key, 0
         try:
-            result = s3.head_object(Bucket=settings.S3_BUCKET, Key=key)
+            result = s3.head_object(Bucket=settings.S3_BUCKET, Key=key, **bucket_owner_condition(settings))
             return key, int(result.get('ContentLength', 0) > 0)
         except ClientError as exc:
             return key, 0 if exc.response.get('Error', {}).get('Code') in ('404', 'NoSuchKey', 'NotFound') else None

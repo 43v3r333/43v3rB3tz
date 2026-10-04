@@ -198,7 +198,7 @@ export default function MiroFishLabPage() {
               </div>
             </div>
             <p className="text-sm text-zinc-400 mt-1 max-w-3xl">
-              Multi-agent emergent simulation engine fusing qualitative soccer agent consensus with 43v3r Bets quantitative ML probabilities.
+              Multi-agent emergent simulation engine fusing qualitative soccer agent consensus with 43v3rB3tz quantitative ML probabilities.
             </p>
           </div>
 
@@ -543,7 +543,7 @@ export default function MiroFishLabPage() {
                       <div className="space-y-2 text-xs bg-zinc-950/60 p-3 rounded-lg border border-zinc-800/60 mb-3">
                         <div className="grid grid-cols-3 gap-2 text-center pb-1.5 border-b border-zinc-800/80 font-mono text-[11px]">
                           <div>
-                            <span className="text-zinc-500 block text-[9px] uppercase">43v3r Bets ML</span>
+                            <span className="text-zinc-500 block text-[9px] uppercase">43v3rB3tz ML</span>
                             <span className="font-semibold text-emerald-400">
                               H: {(ml.H * 100).toFixed(0)}% | D: {(ml.D * 100).toFixed(0)}% | A: {(ml.A * 100).toFixed(0)}%
                             </span>
@@ -839,7 +839,7 @@ export default function MiroFishLabPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-3.5 bg-zinc-950/70 border border-zinc-800 rounded-xl">
                     <span className="text-[10px] font-bold uppercase text-zinc-500 block mb-1">
-                      43v3r Bets Statistical ML
+                      43v3rB3tz Statistical ML
                     </span>
                     <p className="text-xs text-zinc-300 mb-2 font-mono">
                       H: {(sandboxResult.ml_probabilities.H * 100).toFixed(1)}% | D: {(sandboxResult.ml_probabilities.D * 100).toFixed(1)}% | A: {(sandboxResult.ml_probabilities.A * 100).toFixed(1)}%
@@ -1138,14 +1138,14 @@ export default function MiroFishLabPage() {
                 <div>
                   <span className="text-[10px] text-zinc-500 uppercase block">Settled Simulations Audited</span>
                   <span className="text-xl font-bold text-white">
-                    {calibration?.total_settled_simulations_evaluated ?? 6}
+                    {calibration?.total_settled_simulations_evaluated ?? "Unavailable"}
                   </span>
                   <span className="text-xs text-zinc-500 block">Closed-Loop Verification</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-zinc-500 uppercase block">Top Performing Agent</span>
                   <span className="text-xl font-bold text-emerald-400 capitalize">
-                    {calibration?.highest_performing_agent?.replace("_", " ") ?? "Tactical Strategist"}
+                    {calibration?.highest_performing_agent?.replace("_", " ") ?? "Insufficient evidence"}
                   </span>
                   <span className="text-xs text-zinc-500 block">Highest Empirical Accuracy</span>
                 </div>
@@ -1177,10 +1177,10 @@ export default function MiroFishLabPage() {
                   </div>
                   <div className="text-right">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      {calibration?.agent_performance?.tactical_strategist?.accuracy_pct ?? 83.3}% Accuracy
+                      {calibration?.agent_performance?.tactical_strategist?.accuracy_pct == null ? "Not evaluated" : calibration.agent_performance.tactical_strategist.accuracy_pct + "% accuracy"}
                     </span>
                     <span className="text-[10px] text-zinc-400 block mt-0.5">
-                      Weight: {((calibration?.calibrated_weights?.tactical_strategist ?? 0.294) * 100).toFixed(1)}%
+                      Weight: {calibration?.calibrated_weights?.tactical_strategist == null ? "Unavailable" : (calibration.calibrated_weights.tactical_strategist * 100).toFixed(1) + "%"}
                     </span>
                   </div>
                 </div>
@@ -1207,10 +1207,10 @@ export default function MiroFishLabPage() {
                   </div>
                   <div className="text-right">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-500/20 text-purple-400 border border-purple-500/30">
-                      {calibration?.agent_performance?.sharp_bettor?.accuracy_pct ?? 33.3}% Accuracy
+                      {calibration?.agent_performance?.sharp_bettor?.accuracy_pct == null ? "Not evaluated" : calibration.agent_performance.sharp_bettor.accuracy_pct + "% accuracy"}
                     </span>
                     <span className="text-[10px] text-zinc-400 block mt-0.5">
-                      Weight: {((calibration?.calibrated_weights?.sharp_bettor ?? 0.118) * 100).toFixed(1)}%
+                      Weight: {calibration?.calibrated_weights?.sharp_bettor == null ? "Unavailable" : (calibration.calibrated_weights.sharp_bettor * 100).toFixed(1) + "%"}
                     </span>
                   </div>
                 </div>
@@ -1237,10 +1237,10 @@ export default function MiroFishLabPage() {
                   </div>
                   <div className="text-right">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                      {calibration?.agent_performance?.squad_morale?.accuracy_pct ?? 83.3}% Accuracy
+                      {calibration?.agent_performance?.squad_morale?.accuracy_pct == null ? "Not evaluated" : calibration.agent_performance.squad_morale.accuracy_pct + "% accuracy"}
                     </span>
                     <span className="text-[10px] text-zinc-400 block mt-0.5">
-                      Weight: {((calibration?.calibrated_weights?.squad_morale ?? 0.294) * 100).toFixed(1)}%
+                      Weight: {calibration?.calibrated_weights?.squad_morale == null ? "Unavailable" : (calibration.calibrated_weights.squad_morale * 100).toFixed(1) + "%"}
                     </span>
                   </div>
                 </div>
@@ -1267,10 +1267,10 @@ export default function MiroFishLabPage() {
                   </div>
                   <div className="text-right">
                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
-                      {calibration?.agent_performance?.match_dynamics?.accuracy_pct ?? 83.3}% Accuracy
+                      {calibration?.agent_performance?.match_dynamics?.accuracy_pct == null ? "Not evaluated" : calibration.agent_performance.match_dynamics.accuracy_pct + "% accuracy"}
                     </span>
                     <span className="text-[10px] text-zinc-400 block mt-0.5">
-                      Weight: {((calibration?.calibrated_weights?.match_dynamics ?? 0.294) * 100).toFixed(1)}%
+                      Weight: {calibration?.calibrated_weights?.match_dynamics == null ? "Unavailable" : (calibration.calibrated_weights.match_dynamics * 100).toFixed(1) + "%"}
                     </span>
                   </div>
                 </div>
@@ -1372,7 +1372,7 @@ export default function MiroFishLabPage() {
             <div className="card p-6 border border-zinc-800 bg-zinc-950/90 text-xs space-y-3">
               <h4 className="font-bold text-white text-sm">System Integration Architecture</h4>
               <p className="text-zinc-400 leading-relaxed">
-                MiroFish runs as an integrated service in 43v3r Bets. When generating forecasts, 43v3r Bets compiles a comprehensive match dossier and transmits it to the MiroFish multi-agent collective. The agents debate across 1,200 simulated conversational interaction cycles, returning structured probabilistic consensus and simulated match trajectories. The Bayesian Ensemble Fusion engine then calculates the final weighted probability distribution.
+                MiroFish runs as an integrated service in 43v3rB3tz. When generating forecasts, 43v3rB3tz compiles a comprehensive match dossier and transmits it to the MiroFish multi-agent collective. The agents debate across 1,200 simulated conversational interaction cycles, returning structured probabilistic consensus and simulated match trajectories. The Bayesian Ensemble Fusion engine then calculates the final weighted probability distribution.
               </p>
               <div className="pt-2 text-zinc-500 font-mono">
                 Formula: P_Ensemble(Outcome) = 0.55 × P_ML(Outcome) + 0.45 × P_Swarm(Outcome)

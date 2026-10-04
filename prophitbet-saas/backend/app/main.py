@@ -17,7 +17,7 @@ logging.basicConfig(
 logger = logging.getLogger("prophitbet")
 
 app = FastAPI(
-    title="43v3r Bets API",
+    title="43v3rB3tz API",
     description="AI-powered soccer predictions SaaS platform",
     version="1.0.0",
     docs_url="/docs",
@@ -63,7 +63,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.on_event("startup")
 async def startup():
-    logger.info("43v3r Bets API starting up...")
+    logger.info("43v3rB3tz API starting up...")
     try:
         from backend.app.services.league_service import ensure_s3_bucket_sync
 
@@ -87,7 +87,7 @@ async def startup():
 async def shutdown():
     from backend.app.db.session import engine
     await engine.dispose()
-    logger.info("43v3r Bets API shut down")
+    logger.info("43v3rB3tz API shut down")
 
 
 from backend.app.api import api_router  # noqa: E402

@@ -27,6 +27,18 @@ class BookmakerFeedTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 parse_betway(self.source, self.now)
 
+    def test_schedule_in_separate_link_for_same_event(self):
+        fragment = self.html.replace('Today 15:30', '') + '<a href="/event/soccer/test/a-b?eventId=123">Today 15:30</a>'
+        rows, rejected = parse_betway({**self.source, 'events': [fragment]}, self.now)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rejected, {})
+
+    def test_conflicting_schedule_links_are_rejected(self):
+        fragment = self.html + '<a href="/event/soccer/test/a-b?eventId=123">Tomorrow 15:30</a>'
+        rows, rejected = parse_betway({**self.source, 'events': [fragment]}, self.now)
+        self.assertEqual(rows, [])
+        self.assertEqual(rejected, {'ambiguous_kickoff': 1})
+
     def test_metadata_rejected(self):
         for key, value in [('clock', '08:00:00'), ('browser_timezone', 'UTC'),
                            ('headers', ['Totals']), ('url', 'https://example.com'),

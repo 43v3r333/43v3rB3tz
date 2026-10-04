@@ -103,7 +103,7 @@ class DomainCollector:
                     folder.mkdir(parents=True, exist_ok=True)
                     handler = RotatingFileHandler(folder / 'validation.jsonl', maxBytes=2_000_000, backupCount=3)
                     try:
-                        entry = dict(timestamp=datetime.now(timezone.utc).isoformat(), stage='validation', checks=summary)
+                        entry = {'timestamp': datetime.now(timezone.utc).isoformat(), 'stage': 'validation', 'checks': summary}
                         handler.emit(logging.LogRecord('validation', logging.INFO, '', 0, json.dumps(entry), (), None))
                     finally:
                         handler.close()

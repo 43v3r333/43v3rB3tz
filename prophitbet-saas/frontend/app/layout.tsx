@@ -1,27 +1,18 @@
 import type { Metadata } from "next";
-import { DM_Sans } from "next/font/google";
 import { AuthProvider } from "@/lib/auth";
-import BackNavigation from "@/components/BackNavigation";
 import "./globals.css";
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
 export const metadata: Metadata = {
-  title: "43v3r Bets — Soccer predictions & analysis",
+  title: "43v3rB3tz — Soccer predictions & analysis",
   description:
     "Match predictions across 36+ leagues, statistical analysis, and custom models—built for people who read the numbers.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${dmSans.variable}`}>
+    <html lang="en" className="dark">
       <body className="min-h-screen antialiased font-sans text-zinc-50 bg-zinc-900">
-        <AuthProvider><BackNavigation />{children}</AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

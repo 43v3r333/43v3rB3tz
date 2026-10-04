@@ -1,5 +1,6 @@
-"""Collect public bookmaker DOM evidence using Dots' engine, without an LLM.
+"""Collect public bookmaker DOM evidence using standard Playwright and Edge.
 
+Install tools/requirements-bookmaker.txt in the Dots Python environment first.
 Run with tools/dots/.venv/Scripts/python.exe. No login, price clicks or bets.
 """
 import argparse
@@ -14,7 +15,7 @@ from urllib.parse import urlparse
 from urllib.robotparser import RobotFileParser
 
 import requests
-from invisible_playwright import InvisiblePlaywright
+from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'storage' / 'bookmaker-feed' / 'snapshot.json'
@@ -46,13 +47,14 @@ def write_log(entry):
 def collect():
     started = time.monotonic()
     snapshot = {'schema_version': 1, 'collector': 'dots-dom-v1', 'sources': {}}
-    with InvisiblePlaywright(headless=True, prep_recaptcha=False,
-                             timezone='Africa/Johannesburg') as browser:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(channel='msedge', headless=True, timeout=30000)
+        context = browser.new_context(timezone_id='Africa/Johannesburg')
         for bookmaker, url in SOURCES.items():
             source_started = time.monotonic()
             source = {'url': url, 'status': 'unavailable', 'events': []}
             snapshot['sources'][bookmaker] = source
-            page = browser.new_page()
+            page = context.new_page()
             try:
                 if not allowed(url):
                     source['status'] = 'robots_disallowed'
@@ -67,7 +69,7 @@ def collect():
                         headers: Array.from(body.querySelectorAll('.event-market-select-0, .event-market-0')).map(e=>e.innerText),
                         clock: (body.innerText.match(/Current time:\\s*(\\d{2}:\\d{2}:\\d{2})/)||[])[1]||null,
                         browser_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        events: Array.from(body.querySelectorAll('details > div[id]')).filter(e=>e.querySelector('a[href*="eventId="] strong')).slice(0,500).map(e=>e.outerHTML)
+                        events: Array.from(body.querySelectorAll('details div[id]')).filter(e=>/^\\d+$/.test(e.id) && Array.from(e.querySelectorAll('a[href*="eventId="]')).some(a=>a.querySelector('strong') && new URL(a.href).searchParams.get('eventId')===e.id)).slice(0,500).map(e=>e.outerHTML)
                     })'''))
                     source['status'] = 'collected' if source['events'] else 'no_events'
                 else:
@@ -88,6 +90,8 @@ def collect():
             finally:
                 source['duration_seconds'] = round(time.monotonic() - source_started, 3)
                 page.close()
+        context.close()
+        browser.close()
     snapshot['collected_at'] = datetime.now(timezone.utc).isoformat()
     snapshot['duration_seconds'] = round(time.monotonic() - started, 3)
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)

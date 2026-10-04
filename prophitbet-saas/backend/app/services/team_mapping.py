@@ -186,6 +186,9 @@ TEAM_NAME_MAPPINGS = {
     "Cadiz": "Cadiz",
     "Cádiz": "Cadiz",
     "Las Palmas": "Las Palmas",
+    "Sporting Gijon": "Sporting Gijón",
+    "CD Castellon": "Castellón",
+    "AD Ceuta": "Ceuta",
     "Granada": "Granada",
     "Almeria": "Almeria",
     "Almería": "Almeria",
@@ -413,7 +416,25 @@ for alias, canonical in TEAM_NAME_MAPPINGS.items():
     _CANONICAL_TO_ALIASES[canonical].append(alias)
 
 
-def normalize_team_name(raw_name: str, canonical_names: list[str]) -> Optional[str]:
+def _explicit_team_match(raw: str, canonical_names: list[str]) -> Optional[str]:
+    """Resolve only exact names and the maintained alias catalog."""
+    if raw in canonical_names:
+        return raw
+    mapped = TEAM_NAME_MAPPINGS.get(raw)
+    if mapped in canonical_names:
+        return mapped
+    raw_lower = raw.lower()
+    for canonical in canonical_names:
+        aliases = _CANONICAL_TO_ALIASES.get(canonical, [])
+        if canonical.lower() == raw_lower or any(alias.lower() == raw_lower for alias in aliases):
+            return canonical
+    identity = TEAM_NAME_MAPPINGS.get(raw, raw).casefold()
+    equivalents = [name for name in canonical_names
+                   if TEAM_NAME_MAPPINGS.get(name, name).casefold() == identity]
+    return equivalents[0] if len(equivalents) == 1 else None
+
+
+def normalize_team_name(raw_name: str, canonical_names: list[str], *, allow_fuzzy: bool = True) -> Optional[str]:
     """
     Normalize a raw/scraped team name to a canonical name from the training data.
     
@@ -431,29 +452,11 @@ def normalize_team_name(raw_name: str, canonical_names: list[str]) -> Optional[s
     if not raw:
         return None
     
-    # Direct match in canonical names
-    if raw in canonical_names:
-        return raw
-    
-    # Check explicit mapping
-    if raw in TEAM_NAME_MAPPINGS:
-        mapped = TEAM_NAME_MAPPINGS[raw]
-        if mapped in canonical_names:
-            return mapped
-    
-    # Case-insensitive match
+    explicit = _explicit_team_match(raw, canonical_names)
+    if explicit is not None or not allow_fuzzy:
+        return explicit
     raw_lower = raw.lower()
-    for canonical in canonical_names:
-        if canonical.lower() == raw_lower:
-            return canonical
-    
-    # Check aliases for each canonical name
-    for canonical in canonical_names:
-        if canonical in _CANONICAL_TO_ALIASES:
-            for alias in _CANONICAL_TO_ALIASES[canonical]:
-                if alias.lower() == raw_lower:
-                    return canonical
-    
+
     # Fuzzy matching using difflib
     import difflib
     close = difflib.get_close_matches(raw, canonical_names, n=1, cutoff=0.75)

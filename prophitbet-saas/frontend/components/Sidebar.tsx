@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn, planBadgeColor } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 
 export interface NavLinkItem {
@@ -31,7 +31,7 @@ export const navLinks: NavLinkItem[] = [
   },
   {
     href: "/mirofish",
-    label: "MiroFish AI",
+    label: "MiroFish research",
     badge: "SWARM",
     icon: "M13 10V3L4 14h7v7l9-11h-7z",
   },
@@ -47,7 +47,7 @@ export const navLinks: NavLinkItem[] = [
   },
   {
     href: "/live",
-    label: "Live Match Watch",
+    label: "Live matches",
     badge: "🔴 LIVE",
     icon: "M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z",
   },
@@ -91,77 +91,40 @@ export const adminLink: NavLinkItem = {
   icon: "M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z",
 };
 
-export default function Sidebar() {
+const groups = [
+  { label: "Match centre", paths: ["/dashboard", "/fixtures", "/predictions", "/results", "/live", "/leagues"] },
+  { label: "Research", paths: ["/analysis", "/models", "/mirofish"] },
+  { label: "Betting", paths: ["/sa-markets", "/betslip"] },
+  { label: "Workspace", paths: ["/settings", "/billing", "/admin"] },
+];
+
+export function NavigationLinks({ onNavigate }: Readonly<{ onNavigate?: () => void }>) {
   const pathname = usePathname();
   const { user } = useAuth();
+  const links = user?.is_admin ? [...navLinks, adminLink] : navLinks;
+  return <nav aria-label="Main navigation" className="space-y-6 py-3">
+    {groups.map(group => <div key={group.label}>
+      <h2 className="mb-2 px-3 text-[11px] font-medium uppercase tracking-widest text-zinc-500">{group.label}</h2>
+      <div className="space-y-0.5">{group.paths.map(path => {
+        const link = links.find(item => item.href === path);
+        if (!link) return null;
+        const active = pathname === path || pathname.startsWith(path + "/");
+        return <Link key={path} href={path} onClick={onNavigate} aria-current={active ? "page" : undefined}
+          className={cn("flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+            active ? "bg-zinc-800 text-white" : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100")}>
+          <svg aria-hidden="true" className={cn("h-[18px] w-[18px] shrink-0", active && "text-emerald-300")} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d={link.icon} />
+          </svg>
+          {link.label}
+        </Link>;
+      })}</div>
+    </div>)}
+  </nav>;
+}
 
-  const allLinks: NavLinkItem[] = user?.is_admin ? [...navLinks, adminLink] : navLinks;
-
-  return (
-    <aside className="hidden lg:flex w-64 flex-col border-r border-zinc-700/80 bg-zinc-900/95 backdrop-blur-md sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto shrink-0 z-30">
-      <nav className="flex-1 space-y-1 px-3 py-5">
-        <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-          Navigation
-        </div>
-        {allLinks.map((link) => {
-          const active = pathname.startsWith(link.href);
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
-                active
-                  ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-semibold shadow-sm"
-                  : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100 border border-transparent"
-              )}
-            >
-              <svg
-                className={cn(
-                  "w-5 h-5 flex-shrink-0 transition-colors",
-                  active ? "text-emerald-400" : "text-zinc-400 group-hover:text-zinc-200"
-                )}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.75}
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" d={link.icon} />
-              </svg>
-              <span>{link.label}</span>
-              {link.badge ? (
-                <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold rounded uppercase tracking-wider bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                  {link.badge}
-                </span>
-              ) : active ? (
-                <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)]" />
-              ) : null}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {user && (
-        <div className="p-3 m-3 border border-zinc-800 bg-zinc-950/60 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div className="truncate pr-2">
-              <p className="text-xs font-medium text-zinc-300 truncate">{user.email}</p>
-              <span className={`badge mt-1.5 ${planBadgeColor(user.plan)}`}>
-                {user.plan.toUpperCase()}
-              </span>
-            </div>
-            <Link
-              href="/settings"
-              title="Settings"
-              className="p-1.5 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 rounded-md transition"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-      )}
-    </aside>
-  );
+export default function Sidebar() {
+  return <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] w-60 shrink-0 overflow-y-auto border-r border-zinc-800 bg-zinc-950 px-3 lg:block">
+    <NavigationLinks />
+    <p className="border-t border-zinc-800 px-3 py-5 text-xs leading-relaxed text-zinc-500">Model estimates are not guarantees. Review the data before making a decision.</p>
+  </aside>;
 }

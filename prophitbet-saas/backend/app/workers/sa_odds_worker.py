@@ -27,8 +27,11 @@ def sync_sa_odds_task():
 
     try:
         res = asyncio.run(_run())
-        logger.info(f"SA odds task finished successfully: {res}")
+        if res.get("status") in ("error", "unavailable"):
+            logger.warning("SA odds sync produced no usable feed: %s", res)
+        else:
+            logger.info("SA odds sync completed: %s", res)
         return res
     except Exception as e:
         logger.error(f"Error in sync_sa_odds_task: {e}", exc_info=True)
-        return {"status": "error", "message": str(e)}
+        raise

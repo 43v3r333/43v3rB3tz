@@ -133,7 +133,6 @@ def train_model(
 
     tt = parse_target(target_type)
     params = _classification_ctor_kwargs(tt, hyperparams)
-    model = model_cls(**params)
     evaluation_report = evaluate_temporally(df, lambda: model_cls(**params), tt)
     model = model_cls(**params)
     model.fit(train_df=df, eval_df=None)

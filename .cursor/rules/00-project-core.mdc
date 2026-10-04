@@ -1,0 +1,12 @@
+---
+description: Global ProphitBet constraints for all agents
+alwaysApply: true
+---
+
+# Project core
+
+- **Scope**: Change only what the task requires. No drive-by refactors, no unrelated files, no unsolicited new docs.
+- **Two codebases**: Desktop (`app.py`, `src/`) vs SaaS (`prophitbet-saas/`). Shared ML lives in `src/`; SaaS imports it via `ML_CORE_PATH` — do not fork core ML logic into the API package.
+- **Paths**: League definitions: `storage/network/leagues.json`. Docker uses service names (`postgres`, `redis`, `minio`) and `ML_CORE_PATH=/app/src` inside containers; local dev may use `localhost` — see `prophitbet-saas/docker-compose.yml` and `.env`.
+- **Citations**: When showing existing code, use the required fence format with line ranges and filepath (see Cursor user rules).
+- **Plans**: Do not modify `.cursor/plans/*.md` or user plan files unless explicitly asked.

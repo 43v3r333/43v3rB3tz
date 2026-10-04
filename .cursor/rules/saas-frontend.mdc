@@ -1,0 +1,14 @@
+---
+description: SaaS frontend — Next.js App Router, Tailwind, auth
+globs:
+  - prophitbet-saas/frontend/**/*.tsx
+  - prophitbet-saas/frontend/**/*.ts
+alwaysApply: false
+---
+
+# SaaS frontend (Next.js)
+
+- **API base**: `NEXT_PUBLIC_API_URL` (see [`lib/api.ts`](prophitbet-saas/frontend/lib/api.ts)) — defaults differ between Docker and local; preserve env-based URLs.
+- **Auth**: Client state in [`lib/auth.tsx`](prophitbet-saas/frontend/lib/auth.tsx); API calls use Bearer tokens via `apiFetch` / `authApi`.
+- **Layout**: Dashboard pages use [`components/DashboardLayout.tsx`](prophitbet-saas/frontend/components/DashboardLayout.tsx) (login redirect). Match existing Tailwind classes (`card`, `btn-primary`, etc.).
+- **Server vs client**: Pages that need hooks use `"use client"` as already established in the app.

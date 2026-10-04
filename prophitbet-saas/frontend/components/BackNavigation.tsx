@@ -31,7 +31,7 @@ function NavigationButton() {
   const disabled = !canGoBack && fallback === pathname;
 
   return (
-    <nav aria-label="Back navigation" className="border-b border-zinc-800 bg-zinc-950/80 px-4 py-2 sm:px-6 lg:px-8">
+    <nav aria-label="Back navigation" className="py-1">
       <button type="button" disabled={disabled}
         onClick={() => canGoBack ? router.back() : router.push(fallback)}
         aria-label={canGoBack ? "Go back to previous page" : disabled ? "No previous page" : `Go back to ${fallback === "/" ? "home" : fallback.split("/").pop()}`}
@@ -43,5 +43,5 @@ function NavigationButton() {
 }
 
 export default function BackNavigation() {
-  return <Suspense fallback={<div className="h-12 border-b border-zinc-800" />}><NavigationButton /></Suspense>;
+  return <Suspense fallback={<div className="h-10 w-20" />}><NavigationButton /></Suspense>;
 }

@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
 
         self._app = app
 
-        self._title = '43v3r Bets'
+        self._title = '43v3rB3tz'
         self._width = 800
         self._height = 600
 
@@ -647,7 +647,7 @@ class MainWindow(QMainWindow):
         QMessageBox.information(
             self,
             'Welcome Notification',
-            'Thank you for using 43v3r Bets. '
+            'Thank you for using 43v3rB3tz. '
                  'This is an open-source, non-profit application. I am not responsible for any losses. '
                  'Please Bet Responsibly!'
         )

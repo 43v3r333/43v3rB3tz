@@ -66,8 +66,7 @@ if (-not $Token) {
         $resp = Invoke-RestMethod "$SonarUrl/api/user_tokens/generate" -Method POST -Headers $headers `
             -Body "name=prophitbet-ci&type=GLOBAL_ANALYSIS_TOKEN"
         $Token = $resp.token
-        Write-Host "  Token generated. Add to .env as: SONAR_TOKEN=$Token" -ForegroundColor Green
-        Write-Host "  (or pass: .\run-sonar-scan.ps1 -Token `"$Token`")" -ForegroundColor DarkGray
+        Write-Host "  Analysis token generated for this scan; its value is not logged." -ForegroundColor Green
     } catch {
         Write-Host "`n[!] Authentication failed with SonarQube ($($_.Exception.Message))." -ForegroundColor Red
         Write-Host "    The admin password has likely been changed from the default ('admin')." -ForegroundColor Yellow
@@ -75,7 +74,7 @@ if (-not $Token) {
         Write-Host "    1. Pass your admin password:  .\run-sonar-scan.ps1 -AdminPassword `"your_password`"" -ForegroundColor Cyan
         Write-Host "    2. Pass an analysis token:    .\run-sonar-scan.ps1 -Token `"squ_your_token`"" -ForegroundColor Cyan
         Write-Host "       (Create one at: $SonarUrl/account/security)" -ForegroundColor DarkGray
-        Write-Host "    3. Reset the admin password back to 'admin' in PostgreSQL." -ForegroundColor Cyan
+        Write-Host "    Use your existing account recovery process if access is lost; do not reset to a default password." -ForegroundColor Cyan
         throw
     }
 } else {
@@ -102,7 +101,7 @@ try {
     & docker compose `
         --profile scan `
         run --rm `
-        -e "SONAR_TOKEN=$Token" `
+        -e SONAR_TOKEN `
         -e "SONAR_HOST_URL=$InternalUrl" `
         sonar-scanner
     if ($LASTEXITCODE -ne 0) {

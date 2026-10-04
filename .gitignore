@@ -23,3 +23,5 @@
 /.freebuff/
 /storage/leagues/
 /prophitbet-saas/=
+/reports/.coverage*
+/reports/backend-coverage.xml

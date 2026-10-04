@@ -13,7 +13,6 @@ from backend.app.auth.dependencies import get_optional_user
 from backend.app.db.models import Fixture, League, Prediction, User
 from backend.app.db.session import get_db
 from backend.app.services.data_integrity import publishable_prediction
-from backend.app.services.live_match_service import LiveMatchEngine
 
 logger = logging.getLogger(__name__)
 
@@ -129,59 +128,8 @@ async def get_match_timeline(
     db: AsyncSession = Depends(get_db),
     user: Optional[User] = Depends(get_optional_user),
 ):
-    """Retrieve full 90-minute tactical simulation timeline with play-by-play commentary."""
+    """Do not substitute generated events for an unavailable live provider."""
     raise HTTPException(
         status_code=501,
         detail="Live timeline unavailable: no verified live-event provider is configured",
     )
-    # Look up prediction
-    stmt = (
-        select(Prediction, League.name.label("league_name"), League.country.label("league_country"))
-        .join(League, Prediction.league_id == League.id)
-        .where(Prediction.id == match_id, publishable_prediction())
-    )
-    res = await db.execute(stmt)
-    row = res.first()
-
-    if not row:
-        # Fallback search by Fixture
-        f_stmt = select(Fixture, League.name.label("league_name")).outerjoin(League, Fixture.league_id == League.id).where(Fixture.id == match_id, Fixture.is_current.is_(True))
-        f_res = await db.execute(f_stmt)
-        f_row = f_res.first()
-        if not f_row:
-            raise HTTPException(status_code=404, detail="Match not found")
-
-        fix, lg_name = f_row
-        home_team = fix.home_team
-        away_team = fix.away_team
-        league_name = lg_name or "Premier League"
-        prob_h = 0.45
-        prob_d = 0.28
-        prob_a = 0.27
-    else:
-        pred, lg_name, lg_country = row
-        home_team = pred.home_team
-        away_team = pred.away_team
-        league_name = lg_name or "Premier League"
-        probs = pred.probabilities or {}
-        prob_h = float(probs.get("H", 0.45))
-        prob_d = float(probs.get("D", 0.28))
-        prob_a = float(probs.get("A", 0.27))
-
-    # Calculate projected goals based on probability weights
-    projected_h = 0.9 + prob_h * 1.5
-    projected_a = 0.7 + prob_a * 1.3
-
-    timeline_data = LiveMatchEngine.generate_match_timeline(
-        match_id=match_id,
-        home_team=home_team,
-        away_team=away_team,
-        league_name=league_name,
-        prob_home=prob_h,
-        prob_draw=prob_d,
-        prob_away=prob_a,
-        projected_home_goals=projected_h,
-        projected_away_goals=projected_a,
-    )
-
-    return timeline_data

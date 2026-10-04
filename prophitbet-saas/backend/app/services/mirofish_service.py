@@ -35,30 +35,38 @@ logger = logging.getLogger(__name__)
 # 1. Match Dossier Generator (ProphitBet -> MiroFish Seed Data)
 # ---------------------------------------------------------------------------
 
-def build_match_dossier(
-    prediction: Prediction,
-    league: Optional[League] = None,
-    fixture: Optional[Fixture] = None,
-    league_df: Optional[pd.DataFrame] = None,
-) -> Dict[str, Any]:
-    """Compile rich empirical statistical match dossier used as seed material for MiroFish agents."""
+def _validated_match_probabilities(prediction):
     probs = prediction.probabilities or {}
-    p_h = float(probs.get("H", 0.33))
-    p_d = float(probs.get("D", 0.33))
-    p_a = float(probs.get("A", 0.34))
+    try:
+        p_h, p_d, p_a = (float(probs[key]) for key in ("H", "D", "A"))
+    except (KeyError, TypeError, ValueError) as exc:
+        raise ValueError("Complete match-result probabilities are required") from exc
+    if not all(math.isfinite(p) and 0 <= p <= 1 for p in (p_h, p_d, p_a)) or not math.isclose(p_h + p_d + p_a, 1, abs_tol=0.01):
+        raise ValueError("Match-result probabilities must be finite and sum to one")
 
+    return p_h, p_d, p_a
+
+
+def _validated_fixture_odds(fixture):
     if not fixture or any(value is None for value in (fixture.odds_1, fixture.odds_x, fixture.odds_2)):
         raise ValueError("Verified fixture odds are required for MiroFish analysis")
     odds_h, odds_d, odds_a = fixture.odds_1, fixture.odds_x, fixture.odds_2
+    if not all(math.isfinite(float(price)) and float(price) > 1 for price in (odds_h, odds_d, odds_a)):
+        raise ValueError("Valid decimal fixture odds greater than one are required")
 
-    match_date_str = (
-        prediction.match_date.strftime("%Y-%m-%d %H:%M UTC")
-        if prediction.match_date
-        else "Upcoming"
-    )
+    return odds_h, odds_d, odds_a
 
+
+def _pre_match_stats(prediction, league_df):
     # 1. Extract Real Historical Match Data & Form from Dataset
     if league_df is not None and not league_df.empty:
+        if prediction.match_date is None or "Date" not in league_df:
+            raise ValueError("Dated historical records and a kickoff time are required")
+        dates = pd.to_datetime(league_df["Date"], errors="coerce", utc=True)
+        kickoff = pd.Timestamp(prediction.match_date)
+        kickoff = kickoff.tz_localize("UTC") if kickoff.tzinfo is None else kickoff.tz_convert("UTC")
+        # Date-only rows cannot establish ordering within kickoff day.
+        league_df = league_df.loc[dates < kickoff.normalize()].copy()
         stats_data = extract_team_stats_from_dataset(
             df=league_df,
             home_team=prediction.home_team,
@@ -66,6 +74,26 @@ def build_match_dossier(
         )
     else:
         raise ValueError("Verified league history is required for MiroFish analysis")
+
+    return stats_data
+
+
+def build_match_dossier(
+    prediction: Prediction,
+    league: Optional[League] = None,
+    fixture: Optional[Fixture] = None,
+    league_df: Optional[pd.DataFrame] = None,
+) -> Dict[str, Any]:
+    """Compile rich empirical statistical match dossier used as seed material for MiroFish agents."""
+    p_h, p_d, p_a = _validated_match_probabilities(prediction)
+    odds_h, odds_d, odds_a = _validated_fixture_odds(fixture)
+    match_date_str = (
+        prediction.match_date.strftime("%Y-%m-%d %H:%M UTC")
+        if prediction.match_date
+        else "Upcoming"
+    )
+
+    stats_data = _pre_match_stats(prediction, league_df)
 
     h_stats = stats_data["home_team_stats"]
     a_stats = stats_data["away_team_stats"]
@@ -458,7 +486,7 @@ class MiroFishService:
         pred = (await db.execute(pred_stmt)).scalar_one_or_none()
         if not pred:
             raise ValueError(f"Prediction {prediction_id} not found")
-        if existing and not force_recompute and (existing.simulation_report or {}).get("data_policy_version") == 2:
+        if existing and not force_recompute and (existing.simulation_report or {}).get("data_policy_version") == 3:
             return existing
 
         # Fetch fixture if available
@@ -513,7 +541,7 @@ class MiroFishService:
         # 4. Fallback to native deterministic OASIS swarm engine
         if not swarm_result:
             swarm_result = _run_deterministic_swarm(dossier)
-        swarm_result["data_policy_version"] = 2
+        swarm_result["data_policy_version"] = 3
         swarm_result["data_sources"] = {
             "fixture": fixture.source_url,
             "fixture_fetched_at": fixture.fetched_at.isoformat() if fixture.fetched_at else None,
@@ -572,6 +600,7 @@ class MiroFishService:
         stmt = (
             select(MiroFishSimulation)
             .where(MiroFishSimulation.prediction_id == prediction_id)
+            .where(MiroFishSimulation.simulation_report["data_policy_version"].as_integer() == 3)
         )
         return (await db.execute(stmt)).scalar_one_or_none()
 
@@ -580,7 +609,8 @@ class MiroFishService:
         """Check status of MiroFish integration engine."""
         settings = get_settings()
         return {
-            "status": "ready",
+            "status": "configured" if (settings.MIROFISH_ENABLED and settings.MIROFISH_API_URL) or settings.LLM_API_KEY else "unavailable",
+            "availability_verified": False,
             "mirofish_enabled": settings.MIROFISH_ENABLED,
             "mirofish_api_url": settings.MIROFISH_API_URL,
             "llm_provider_configured": bool(settings.LLM_API_KEY),
@@ -610,6 +640,7 @@ class MiroFishService:
             select(MiroFishSimulation, Prediction)
             .join(Prediction, MiroFishSimulation.prediction_id == Prediction.id)
             .where(publishable_prediction())
+            .where(MiroFishSimulation.simulation_report["data_policy_version"].as_integer() == 3)
             .options(selectinload(Prediction.league))
             .order_by(Prediction.match_date.desc().nullslast(), MiroFishSimulation.created_at.desc())
         )

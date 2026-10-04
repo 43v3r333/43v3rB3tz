@@ -17,9 +17,12 @@ from bs4 import BeautifulSoup
 from sqlalchemy import select, func, text
 from backend.app.db.models import Fixture, League, Prediction, SABookmakerOdds
 from backend.app.services.betting_integrity import QUOTE_MAX_AGE, valid_odds
+from backend.app.services.team_mapping import normalize_team_name
 
 FEED_PATH = Path('/app/storage/bookmaker-feed/snapshot.json')
 ZA = ZoneInfo('Africa/Johannesburg')
+# Competition identities confirmed from the public event URL and fixture catalog.
+BETWAY_COMPETITIONS = {('spain', 'laliga-2'): ('Spain', 'Segunda-Division')}
 
 
 def aware(value):
@@ -72,11 +75,14 @@ def parse_betway(source, now):
             teams = [e.get_text(strip=True) for e in link.select('strong')]
             if len(teams) != 2 or teams[0].casefold() == teams[1].casefold():
                 raise ValueError('ambiguous_teams')
-            schedule = re.search(r'\b(Today|Tomorrow)\s*(\d{2}:\d{2})\b', link.get_text(' ', strip=True))
-            if not schedule:
+            schedules = set()
+            for event_link in soup.find_all('a', href=link['href']):
+                schedules.update(re.findall(r'\b(Today|Tomorrow)\s*(\d{2}:\d{2})\b', event_link.get_text(' ', strip=True)))
+            if len(schedules) != 1:
                 raise ValueError('ambiguous_kickoff')
-            day = local.date() + timedelta(days=schedule[1] == 'Tomorrow')
-            kickoff = datetime.combine(day, datetime.strptime(schedule[2], '%H:%M').time(), ZA).astimezone(timezone.utc)
+            schedule_day, schedule_time = schedules.pop()
+            day = local.date() + timedelta(days=schedule_day == 'Tomorrow')
+            kickoff = datetime.combine(day, datetime.strptime(schedule_time, '%H:%M').time(), ZA).astimezone(timezone.utc)
             if kickoff <= now:
                 raise ValueError('not_upcoming')
             prices = soup.select('[price]')
@@ -96,12 +102,24 @@ def parse_betway(source, now):
                 continue
             seen.add(event_id)
             records.append(dict(provider_event_id=event_id, source_url=url, home_team=teams[0],
+                provider_competition=parsed.path.strip('/').split('/')[2:4],
                 away_team=teams[1], match_date=kickoff, scraped_at=observed,
                 odds_home=values[0], odds_draw=values[1], odds_away=values[2],
                 evidence_sha256=hashlib.sha256(fragment.encode()).hexdigest()))
         except (ValueError, TypeError, KeyError, AttributeError) as exc:
             rejected[str(exc)] += 1
     return records, dict(rejected)
+
+
+def select_fixture_match(candidates, row):
+    """Allow catalog aliases, never fuzzy names, across exact-kickoff candidates."""
+    matches = []
+    for fixture, league_name in candidates:
+        home = normalize_team_name(row['home_team'], [fixture.home_team], allow_fuzzy=False)
+        away = normalize_team_name(row['away_team'], [fixture.away_team], allow_fuzzy=False)
+        if home is not None and away is not None:
+            matches.append((fixture, league_name))
+    return matches[0] if len(matches) == 1 else None
 
 
 async def _import_snapshot(db, path=FEED_PATH):
@@ -136,15 +154,20 @@ async def _import_snapshot(db, path=FEED_PATH):
             continue
         rejected = Counter(reasons)
         for row in rows:
+            competition = BETWAY_COMPETITIONS.get(tuple(row['provider_competition']))
+            if competition is None:
+                rejected['unsupported_competition_identity'] += 1
+                continue
             candidates = (await db.execute(select(Fixture, League.name).join(League, League.id == Fixture.league_id).where(
+                League.country == competition[0], League.name == competition[1],
                 Fixture.is_current.is_(True), Fixture.fetched_at.between(now-timedelta(hours=48), now),
                 Fixture.source_url.isnot(None), ~Fixture.source_url.ilike('%betway%'),
-                func.lower(Fixture.home_team) == row['home_team'].lower(),
-                func.lower(Fixture.away_team) == row['away_team'].lower(), Fixture.match_date == row['match_date']))).all()
-            if len(candidates) != 1:
+                Fixture.match_date == row['match_date']))).all()
+            matched = select_fixture_match(candidates, row)
+            if matched is None:
                 rejected['no_unique_fresh_fixture_match'] += 1
                 continue
-            fixture, league_name = candidates[0]
+            fixture, league_name = matched
             existing = (await db.execute(select(SABookmakerOdds).where(SABookmakerOdds.fixture_id == fixture.id,
                 SABookmakerOdds.bookmaker == name).order_by(SABookmakerOdds.scraped_at.desc()).limit(1))).scalar_one_or_none()
             if existing and existing.scraped_at >= row['scraped_at']:

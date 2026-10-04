@@ -19,15 +19,15 @@ def probability_scores(y, probabilities):
     for lower in np.arange(0, 1, .1):
         mask = (confidence >= lower) & (confidence < lower + .1 if lower < .9 else confidence <= 1)
         if mask.any():
-            bins.append(dict(count=int(mask.sum()), confidence=float(confidence[mask].mean()),
-                             accuracy=float(correct[mask].mean())))
-    return dict(samples=len(y), accuracy=float(correct.mean()),
-                precision=float(precision_score(y, p.argmax(axis=1), average='macro', zero_division=0)),
-                recall=float(recall_score(y, p.argmax(axis=1), average='macro', zero_division=0)),
-                f1=float(f1_score(y, p.argmax(axis=1), average='macro', zero_division=0)),
-                log_loss=float(-np.log(np.clip(p[np.arange(len(y)), y], 1e-15, 1)).mean()),
-                brier=float(((p - np.eye(p.shape[1])[y]) ** 2).sum(axis=1).mean()),
-                calibration=bins)
+            bins.append({'count': int(mask.sum()), 'confidence': float(confidence[mask].mean()),
+                         'accuracy': float(correct[mask].mean())})
+    return {'samples': len(y), 'accuracy': float(correct.mean()),
+            'precision': float(precision_score(y, p.argmax(axis=1), average='macro', zero_division=0)),
+            'recall': float(recall_score(y, p.argmax(axis=1), average='macro', zero_division=0)),
+            'f1': float(f1_score(y, p.argmax(axis=1), average='macro', zero_division=0)),
+            'log_loss': float(-np.log(np.clip(p[np.arange(len(y)), y], 1e-15, 1)).mean()),
+            'brier': float(((p - np.eye(p.shape[1])[y]) ** 2).sum(axis=1).mean()),
+            'calibration': bins}
 
 
 def evaluate_temporally(df, model_factory, target_type, folds=3):
@@ -52,13 +52,13 @@ def evaluate_temporally(df, model_factory, target_type, folds=3):
         probabilities = np.zeros((len(test), n_classes))
         probabilities[:, classes] = raw
         frequencies = (np.bincount(train_y, minlength=n_classes) + 1) / (len(train_y) + n_classes)
-        reports.append(dict(
-            kind='final_holdout' if index == len(blocks) - 1 else 'validation',
-            training_rows=len(train), training_end=str(dates.loc[train.index].max()),
-            evaluation_start=str(dates.loc[test.index].min()), evaluation_end=str(dates.loc[test.index].max()),
-            model=probability_scores(y, probabilities),
-            baseline=probability_scores(y, np.tile(frequencies, (len(test), 1))),
-        ))
-    return dict(method='expanding_date_blocks', folds=reports,
-                limitations=['Historical feature availability must be audited separately.',
-                             'Calibration uses top-label confidence; Brier is multiclass sum, not class average.'])
+        reports.append({
+            'kind': 'final_holdout' if index == len(blocks) - 1 else 'validation',
+            'training_rows': len(train), 'training_end': str(dates.loc[train.index].max()),
+            'evaluation_start': str(dates.loc[test.index].min()), 'evaluation_end': str(dates.loc[test.index].max()),
+            'model': probability_scores(y, probabilities),
+            'baseline': probability_scores(y, np.tile(frequencies, (len(test), 1))),
+        })
+    return {'method': 'expanding_date_blocks', 'folds': reports,
+            'limitations': ['Historical feature availability must be audited separately.',
+                            'Calibration uses top-label confidence; Brier is multiclass sum, not class average.']}

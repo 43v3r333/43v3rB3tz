@@ -19,7 +19,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-900">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+        <output className="flex items-center gap-3 text-sm text-zinc-400"><span className="animate-spin rounded-full h-5 w-5 border-2 border-zinc-700 border-t-emerald-400" />Loading workspace…</output>
       </div>
     );
   }
@@ -31,8 +31,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Navbar />
       <div className="flex">
         <Sidebar />
-        <main className="app-main flex-1 p-4 sm:p-6 lg:p-8 max-w-[1600px] min-w-0">
-          {children}
+        <main id="main-content" className="app-main flex-1 p-4 sm:p-6 lg:p-8 min-w-0">
+          <div className="mx-auto w-full max-w-[1440px]">{children}</div>
         </main>
       </div>
     </div>

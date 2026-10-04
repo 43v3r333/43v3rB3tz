@@ -1,0 +1,14 @@
+---
+description: Docker Compose, Dockerfiles, ML_CORE_PATH, SaaS runtime layout
+globs:
+  - prophitbet-saas/docker-compose.yml
+  - prophitbet-saas/**/Dockerfile
+alwaysApply: false
+---
+
+# Docker & data pipeline
+
+- **Build context**: Backend image builds from **repo root** (`context: ..`) so `COPY src/` and `prophitbet-saas/backend/` paths in the Dockerfile stay correct.
+- **Volumes**: Compose mounts `../src` → `/app/src`, `../storage` → `/app/storage`, `./backend` → `/app/backend`. Changing paths breaks seed + sync.
+- **Networking**: Inside the stack, DB is `postgres:5432`, Redis `redis:6379`, MinIO `http://minio:9000`. Host machine uses mapped ports (e.g. API `8001`).
+- **Pipeline order**: League sync (Celery) → datasets in MinIO + DB → optional house models → fixture scrape → prediction job. Document changes that alter this order.

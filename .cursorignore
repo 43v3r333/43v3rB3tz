@@ -1,0 +1,21 @@
+﻿# Python bytecode and caches
+**/__pycache__/
+**/*.py[cod]
+**/*.pyo
+**/.pytest_cache/
+**/.mypy_cache/
+**/.ruff_cache/
+
+# Frontend build and deps
+prophitbet-saas/frontend/node_modules/
+prophitbet-saas/frontend/.next/
+prophitbet-saas/frontend/out/
+
+# Logs and local env (keep .env.example discoverable)
+*.log
+prophitbet-saas/.env
+.env.local
+
+# OS / IDE noise
+.DS_Store
+Thumbs.db

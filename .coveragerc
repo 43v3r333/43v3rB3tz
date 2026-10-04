@@ -1,0 +1,9 @@
+[run]
+relative_files = True
+source =
+    prophitbet-saas/backend/app
+    prophitbet-saas/backend/scripts
+    src
+
+[xml]
+output = /reports/backend-coverage.xml

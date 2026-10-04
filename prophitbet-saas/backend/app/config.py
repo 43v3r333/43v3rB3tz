@@ -46,6 +46,7 @@ class Settings(BaseSettings):
     S3_ACCESS_KEY: str = "minioadmin"
     S3_SECRET_KEY: str = "minioadmin"
     S3_BUCKET: str = "prophitbet"
+    S3_EXPECTED_BUCKET_OWNER: str = ""
 
     # Frontend
     FRONTEND_URL: str = "http://localhost:3000"

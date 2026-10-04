@@ -193,11 +193,11 @@ export default function DashboardPage() {
                 Welcome back{user?.name ? `, ${user.name}` : ""}
               </h1>
               <span className="badge bg-emerald-500/15 text-emerald-300 border-emerald-500/30 text-xs uppercase font-bold">
-                {user?.plan || "Elite"}
+                {user?.plan || "Account"}
               </span>
             </div>
             <p className="text-zinc-400 text-sm mt-1">
-              Active match intelligence, popular league tracking, and AI-predicted outcomes.
+              Review upcoming matches, market estimates, and recorded results.
             </p>
           </div>
 
@@ -206,15 +206,13 @@ export default function DashboardPage() {
               href="/predictions"
               className="btn-primary !py-2 !px-4 text-sm inline-flex items-center gap-2 shadow-sm"
             >
-              <span>🎯</span>
-              <span>Predictions Hub ({predictions.length})</span>
+              <span>View predictions</span>
             </Link>
             <Link
               href="/leagues"
               className="btn-secondary !py-2 !px-3.5 text-sm inline-flex items-center gap-1.5"
             >
-              <span>🏆</span>
-              <span>All Leagues ({leagues.length})</span>
+              <span>Browse leagues</span>
             </Link>
           </div>
         </div>
@@ -223,14 +221,14 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
           <div className="card !p-4 bg-zinc-800/50 border-zinc-700/80">
             <div className="text-xs font-medium text-zinc-400 uppercase tracking-wider">
-              Total Predictions (7d)
+              Loaded predictions
             </div>
             <div className="mt-1 flex items-baseline justify-between">
               <span className="text-2xl font-bold text-zinc-50">{kpi.total}</span>
               <span className="text-xs text-zinc-400">{predLeagues.length} leagues</span>
             </div>
             <div className="mt-1.5 text-xs text-emerald-400/90 font-medium">
-              {kpi.upcoming > 0 ? `⚡ ${kpi.upcoming} matches this week` : "Live dataset"}
+              {kpi.upcoming > 0 ? `${kpi.upcoming} matches this week` : "No upcoming matches this week"}
             </div>
           </div>
 
@@ -282,9 +280,8 @@ export default function DashboardPage() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-amber-400 text-sm">⭐</span>
                 <h2 className="text-base font-bold text-zinc-100 tracking-tight">
-                  Top Competitions Quick Access
+                  Competitions
                 </h2>
               </div>
               <Link href="/leagues" className="text-xs text-emerald-400 hover:underline font-medium">
@@ -349,7 +346,7 @@ export default function DashboardPage() {
               href="/predictions"
               className="text-xs text-emerald-400 hover:text-emerald-300 font-semibold self-start sm:self-auto flex items-center gap-1"
             >
-              <span>Explore All in Predictions Hub</span>
+              <span>All predictions</span>
               <span>&rarr;</span>
             </Link>
           </div>
@@ -368,7 +365,8 @@ export default function DashboardPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Quick search match or team (e.g. Southampton, Watford, Betis)..."
+                  aria-label="Search matches or teams"
+                  placeholder="Search matches or teams"
                   className="input !pl-9 !py-1.5 text-xs bg-zinc-800/80 border-zinc-700 placeholder-zinc-500 w-full"
                 />
                 {searchQuery && (

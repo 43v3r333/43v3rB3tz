@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.config import get_settings
 from backend.app.db.models import MiroFishSimulation, Prediction
+from backend.app.services.data_integrity import verified_result
 
 logger = logging.getLogger(__name__)
 
@@ -221,44 +222,16 @@ class QdrantVectorRAGService:
                     data = json.loads(resp.read().decode())
                     points = data.get("result", {}).get("points", [])
                     for pt in points:
-                        p_load = pt.get("payload", {})
-                        if "tactical_profile" in p_load:
-                            return p_load
-                    if points:
-                        p_load = points[0].get("payload", {})
-                        p_load["formation"] = p_load.get("formation", "4-3-3")
-                        p_load["tactical_profile"] = p_load.get("tactical_profile", f"Dynamic system in {p_load.get('league_name', 'league')}.")
-                        p_load["key_strengths"] = p_load.get("key_strengths", "Structured counter-pressing and box entries")
-                        p_load["vulnerabilities"] = p_load.get("vulnerabilities", "Transition defending against pace")
-                        return p_load
-        except Exception:
-            pass
-
-        # 2. Semantic vector search for tactical analog
-        query_vec = _embed_text_128(f"{team_name} tactical profile formation pressing")
-        try:
-            payload = json.dumps({
-                "vector": query_vec,
-                "limit": 1,
-                "with_payload": True,
-            }).encode("utf-8")
-            req = urllib.request.Request(
-                f"{settings.QDRANT_URL}/collections/{COLLECTION_NAME}/points/search",
-                data=payload,
-                headers={"Content-Type": "application/json"},
-                method="POST"
-            )
-            with urllib.request.urlopen(req, timeout=2.0) as resp:
-                if resp.status == 200:
-                    data = json.loads(resp.read().decode())
-                    results = data.get("result", [])
-                    if results and len(results) > 0:
-                        top = results[0]
-                        p_load = top.get("payload", {})
-                        if top.get("score", 0) > 0.35 and "tactical_profile" in p_load:
-                            return p_load
-        except Exception as e:
-            logger.debug(f"Qdrant vector search fallback for {team_name}: {e}")
+                        payload = pt.get("payload", {})
+                        # Never substitute another team's profile or synthesize facts.
+                        # Legacy seeded prose has no source evidence and is excluded.
+                        if (payload.get("team_name") == team_name
+                                and payload.get("tactical_profile")
+                                and payload.get("source_url")
+                                and payload.get("verified_at")):
+                            return payload
+        except Exception as exc:
+            logger.debug("Tactical evidence unavailable for %s: %s", team_name, exc)
 
         return None
 
@@ -271,7 +244,9 @@ class QdrantVectorRAGService:
         stmt = (
             select(MiroFishSimulation, Prediction.actual_result)
             .join(Prediction, MiroFishSimulation.prediction_id == Prediction.id)
-            .where(Prediction.actual_result.isnot(None))
+            .where(verified_result(), Prediction.market_type == "result")
+            .where(MiroFishSimulation.created_at < Prediction.match_date)
+            .where(MiroFishSimulation.simulation_report["data_policy_version"].as_integer() == 3)
         )
         rows = (await db.execute(stmt)).all()
 
@@ -288,7 +263,7 @@ class QdrantVectorRAGService:
             rep = sim.simulation_report or {}
             debates = rep.get("agent_debates", {})
             for agent_key, debate in debates.items():
-                if agent_key in agent_scores:
+                if agent_key in agent_scores and isinstance(debate, dict) and debate.get("lean") in ("H", "D", "A"):
                     lean = debate.get("lean")
                     agent_scores[agent_key]["bets"] += 1
                     if lean == actual_res:
@@ -299,19 +274,20 @@ class QdrantVectorRAGService:
         for k, sc in agent_scores.items():
             b = sc["bets"]
             c = sc["correct"]
-            sc["accuracy_pct"] = round((c / b) * 100.0, 2) if b > 0 else 25.0
-            weights[k] = sc["accuracy_pct"]
+            sc["accuracy_pct"] = round((c / b) * 100.0, 2) if b > 0 else None
+            if b > 0:
+                weights[k] = sc["accuracy_pct"]
 
         # Normalize weights
         total_w = sum(weights.values()) or 100.0
-        calibrated_weights = {k: round(v / total_w, 3) for k, v in weights.items()}
+        calibrated_weights = {k: round(v / total_w, 3) for k, v in weights.items()} if sum(weights.values()) > 0 else {}
 
-        best_agent = max(agent_scores, key=lambda k: agent_scores[k]["accuracy_pct"]) if agent_scores else "tactical_strategist"
+        best_agent = max(weights, key=weights.get) if weights else None
 
         return {
             "total_settled_simulations_evaluated": total_settled_sims,
             "agent_performance": agent_scores,
             "calibrated_weights": calibrated_weights,
             "highest_performing_agent": best_agent,
-            "recalibration_status": "active",
+            "recalibration_status": "evaluated" if weights else "insufficient_evidence",
         }

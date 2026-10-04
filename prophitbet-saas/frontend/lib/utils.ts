@@ -17,7 +17,7 @@ export function formatDate(dateStr: string | null | undefined): string {
 export function formatUtcToLocal(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleString("en-GB", {
     day: "2-digit",
     month: "short",
@@ -210,7 +210,7 @@ export function matchesLeagueFilter(
 export function formatMatchKickoff(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "—";
 
   const timeStr = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   const dayStr = formatMatchDay(dateStr);
@@ -220,7 +220,7 @@ export function formatMatchKickoff(dateStr: string | null | undefined): string {
 export function formatSASTDateTime(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "—";
+  if (Number.isNaN(d.getTime())) return "—";
 
   try {
     return new Intl.DateTimeFormat("en-GB", {

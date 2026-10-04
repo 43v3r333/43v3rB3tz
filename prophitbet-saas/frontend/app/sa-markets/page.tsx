@@ -123,7 +123,7 @@ export default function SouthAfricanMarkets() {
   return <DashboardLayout>
     <div className="mx-auto max-w-7xl space-y-6 pb-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
-        <div><p className="mb-2 text-[11px] font-bold uppercase tracking-[.22em] text-emerald-400">43v3r Bets / Slip studio</p>
+        <div><p className="mb-2 text-[11px] font-bold uppercase tracking-[.22em] text-emerald-400">43v3rB3tz / Slip studio</p>
           <h1 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Build your next slip<span className="text-emerald-400">.</span></h1>
           <p className="mt-2 text-sm text-zinc-400">Start with AI picks. Make it yours. Review every selection.</p></div>
         <Link href="/betslip" className={secondary}><TicketIcon className="h-4 w-4"/>Open journal<ArrowRightIcon className="h-4 w-4"/></Link>

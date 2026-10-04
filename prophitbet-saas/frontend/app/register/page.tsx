@@ -45,7 +45,7 @@ export default function RegisterPage() {
         <div className="anim-reveal-section w-full max-w-md">
           <div className="anim-reveal-inner card w-full">
             <h1 className="text-2xl font-bold text-zinc-50 mb-2">Create your account</h1>
-            <p className="text-zinc-400 mb-8">Start getting AI predictions in minutes</p>
+            <p className="text-zinc-400 mb-8">Set up your 43v3rB3tz workspace</p>
 
             {error && (
               <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400">
@@ -55,8 +55,10 @@ export default function RegisterPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Name</label>
+                <label htmlFor="name" className="block text-sm font-medium text-zinc-400 mb-1">Name</label>
                 <input
+                  id="name"
+                  autoComplete="name"
                   type="text"
                   className="input"
                   placeholder="John Doe"
@@ -66,8 +68,10 @@ export default function RegisterPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
                 <input
+                  id="email"
+                  autoComplete="email"
                   type="email"
                   className="input"
                   placeholder="you@example.com"
@@ -77,8 +81,10 @@ export default function RegisterPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
                 <input
+                  id="password"
+                  autoComplete="new-password"
                   type="password"
                   className="input"
                   placeholder="At least 8 characters"

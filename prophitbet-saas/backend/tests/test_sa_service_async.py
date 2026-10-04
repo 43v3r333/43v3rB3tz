@@ -1,6 +1,10 @@
 """Observed quotes and honest unavailable-feed contracts."""
 import unittest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
+from functools import partial
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from backend.app.services.bookmaker_feed import import_snapshot
 from backend.app.services.sa_odds_service import sa_odds_service, dutch_stakes
 
 
@@ -15,7 +19,11 @@ class SAServiceTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_missing_feed_is_not_reported_as_success(self):
         db = AsyncMock()
-        result = await sa_odds_service.sync_all_sa_markets(db)
+        with TemporaryDirectory() as folder, patch(
+            'backend.app.services.bookmaker_feed.import_snapshot',
+            new=partial(import_snapshot, path=Path(folder) / 'missing.json'),
+        ):
+            result = await sa_odds_service.sync_all_sa_markets(db)
         self.assertEqual(result['status'], 'unavailable')
         self.assertEqual(result['records_synced'], 0)
         db.commit.assert_not_called()

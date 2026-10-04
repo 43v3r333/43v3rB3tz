@@ -1,0 +1,13 @@
+---
+description: SaaS backend — FastAPI, Celery, async SQLAlchemy, S3
+globs: prophitbet-saas/backend/**/*.py
+alwaysApply: false
+---
+
+# SaaS backend
+
+- **Async API**: Use `AsyncSession` + `get_db` patterns from [`prophitbet-saas/backend/app/db/session.py`](prophitbet-saas/backend/app/db/session.py). Commit/rollback follow existing route patterns.
+- **Auth**: JWT via `get_current_user`, `require_plan`, `require_admin` in [`auth/dependencies.py`](prophitbet-saas/backend/app/auth/dependencies.py).
+- **Celery**: Tasks use **sync** SQLAlchemy sessions (`DATABASE_URL_SYNC`) — see workers under `app/workers/`. Long ML work calls `setup_ml_path()` then imports from `src.*`.
+- **S3 / MinIO**: Use [`league_service`](prophitbet-saas/backend/app/services/league_service.py) (`upload_*`, `delete_model_from_s3`, `_load_csv_from_s3`) — do not scatter raw boto3 without bucket checks.
+- **Config**: [`config.py`](prophitbet-saas/backend/app/config.py) — env-driven; Docker Compose overrides DB/Redis/S3 hosts for containers.

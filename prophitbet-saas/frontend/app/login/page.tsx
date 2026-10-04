@@ -40,7 +40,7 @@ export default function LoginPage() {
         <div className="anim-reveal-section w-full max-w-md">
           <div className="anim-reveal-inner card w-full">
             <h1 className="text-2xl font-bold text-zinc-50 mb-2">Welcome back</h1>
-            <p className="text-zinc-400 mb-8">Sign in to your 43v3r Bets account</p>
+            <p className="text-zinc-400 mb-8">Sign in to your 43v3rB3tz account</p>
 
             {error && (
               <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-400">
@@ -50,8 +50,10 @@ export default function LoginPage() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
+                <label htmlFor="email" className="block text-sm font-medium text-zinc-400 mb-1">Email</label>
                 <input
+                  id="email"
+                  autoComplete="email"
                   type="email"
                   className="input"
                   placeholder="you@example.com"
@@ -61,8 +63,10 @@ export default function LoginPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
+                <label htmlFor="password" className="block text-sm font-medium text-zinc-400 mb-1">Password</label>
                 <input
+                  id="password"
+                  autoComplete="current-password"
                   type="password"
                   className="input"
                   placeholder="••••••••"

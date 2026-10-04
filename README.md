@@ -1,4 +1,4 @@
-# 43v3r Bets
+# 43v3rB3tz
 
 Football data, prediction research, and system monitoring. Derived from ProphitBet; original authorship and license notices are retained below and in LICENSE.txt.
 

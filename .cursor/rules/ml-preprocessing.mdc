@@ -1,0 +1,13 @@
+---
+description: ML core — statistics engine, classifiers, preprocessing
+globs:
+  - src/preprocessing/**/*.py
+  - src/models/**/*.py
+alwaysApply: false
+---
+
+# ML / preprocessing (`src/`)
+
+- **StatisticsEngine** ([`statistics.py`](src/preprocessing/statistics.py)): Extended stats (e.g. shots/corners) require raw CSV columns; extra leagues may omit columns — filtering happens in `compute_stats` / `filter_stat_columns_for_dataframe`. Do not assume `HST`/`HC` always exist.
+- **Classifiers**: Follow existing trainer/model patterns under `src/models/classifiers/`; SaaS [`model_service`](prophitbet-saas/backend/app/services/model_service.py) wraps training for the API.
+- **Targets**: `TargetType` and feature construction live under `src/preprocessing/utils/` — keep SaaS prediction paths (`prediction_service`) aligned with desktop expectations.

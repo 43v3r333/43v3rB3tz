@@ -1,0 +1,14 @@
+---
+description: Desktop app — Python, PyQt, src package layout
+globs:
+  - app.py
+  - src/**/*.py
+alwaysApply: false
+---
+
+# Desktop application (`src/`)
+
+- **Imports**: Prefer existing patterns under `src/` (e.g. `from src.preprocessing...`). Keep GUI code in `src/gui/` aligned with current widget/window structure.
+- **Dependencies**: Match `requirements.txt` versions when adding packages; `install.py` is the supported install path for end users.
+- **Platform**: Primary audience is Windows; avoid breaking `app.bat` / path assumptions without good reason.
+- **FootyStats**: Browser-driven scraping lives under `src/network/fixtures/`; do not assume the SaaS httpx scraper behaves the same.
