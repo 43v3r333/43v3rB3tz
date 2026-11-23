@@ -533,20 +533,11 @@ export default function AnalysisPage() {
                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">
                       Sharpe Ratio
                     </span>
-                    <p
-                      className={cn(
-                        "text-xl font-black font-mono",
-                        backtestResult.sharpe_ratio >= 1.0
-                          ? "text-emerald-400"
-                          : backtestResult.sharpe_ratio >= 0
-                          ? "text-zinc-200"
-                          : "text-rose-400"
-                      )}
-                    >
-                      {backtestResult.sharpe_ratio}
+                    <p className="text-xl font-black font-mono text-zinc-200">
+                      {backtestResult.sharpe_ratio ?? '—'}
                     </p>
                     <span className="text-[10px] text-zinc-400 mt-1 inline-block">
-                      Risk-Adjusted Alpha
+                      Trade-return proxy; unavailable with insufficient variance
                     </span>
                   </div>
 
@@ -556,7 +547,7 @@ export default function AnalysisPage() {
                       Profit Factor
                     </span>
                     <p className="text-xl font-black font-mono text-teal-400">
-                      {backtestResult.profit_factor}x
+                      {backtestResult.profit_factor == null ? '—' : `${backtestResult.profit_factor}x`}
                     </p>
                     <span className="text-[10px] text-zinc-400 mt-1 inline-block">
                       Avg Odds: @{backtestResult.avg_odds}

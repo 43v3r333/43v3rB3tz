@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
+  // Docker image needs "standalone"; Vercel builds its own output (VERCEL=1 is set there).
+  output: process.env.VERCEL ? undefined : "standalone",
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001",
   },

@@ -7,7 +7,9 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
-  return new Date(dateStr).toLocaleDateString("en-GB", {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -246,6 +248,7 @@ export function formatSASTDateTime(dateStr: string | null | undefined): string {
 export function formatMatchDay(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "—";
   const now = new Date();
   
   // Calculate difference in calendar days
@@ -274,8 +277,10 @@ export function sortUpcomingFirst(
 ): number {
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-  const ta = a.match_date ? new Date(a.match_date).getTime() : 0;
-  const tb = b.match_date ? new Date(b.match_date).getTime() : 0;
+  const dateA = Date.parse(a.match_date || "");
+  const dateB = Date.parse(b.match_date || "");
+  const ta = Number.isFinite(dateA) ? dateA : 0;
+  const tb = Number.isFinite(dateB) ? dateB : 0;
 
   const aIsUpcoming = ta >= todayStart && !a.actual_result;
   const bIsUpcoming = tb >= todayStart && !b.actual_result;
