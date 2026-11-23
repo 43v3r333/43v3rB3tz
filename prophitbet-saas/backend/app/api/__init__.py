@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from backend.app.api import auth, predictions, leagues, models, analysis, fixtures, billing, admin, mirofish, betslip, sa_markets, live, results, linear
+from backend.app.api import auth, predictions, leagues, models, analysis, fixtures, billing, admin, mirofish, betslip, sa_markets, live, results, linear, ops
 
 api_router = APIRouter()
 
@@ -20,3 +20,4 @@ api_router.include_router(results.router, prefix="/results", tags=["Match Result
 api_router.include_router(linear.router, prefix="/linear", tags=["Linear Integration"])
 
 
+api_router.include_router(ops.router, prefix="/ops", tags=["Ops (LifeOS)"])
