@@ -1,0 +1,50 @@
+name: Deploy backend to Hugging Face Space
+
+# Ships the FastAPI + Celery backend to a free HF Docker Space so 43v3rB3tz runs without Ethan's PC.
+# Needs repo secret HF_TOKEN (write token) and repo variable HF_SPACE (e.g. "43v3r333/43v3rb3tz-api").
+on:
+  push:
+    branches: [codex/system-quality-baseline]
+    paths:
+      - "prophitbet-saas/backend/**"
+      - "src/**"
+      - "storage/network/**"
+      - "deploy/hf-space/**"
+      - ".github/workflows/deploy-hf-space.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: hf-space-deploy
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    if: ${{ vars.HF_SPACE != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assemble Space repo
+        run: |
+          set -e
+          mkdir -p /tmp/space/storage
+          cp deploy/hf-space/Dockerfile deploy/hf-space/start.sh deploy/hf-space/aws_config deploy/hf-space/README.md /tmp/space/
+          cp -r src /tmp/space/src
+          cp -r storage/network /tmp/space/storage/network
+          cp -r prophitbet-saas/backend /tmp/space/backend
+          find /tmp/space -name "__pycache__" -type d -prune -exec rm -rf {} +
+          find /tmp/space -name ".env*" -delete
+
+      - name: Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE: ${{ vars.HF_SPACE }}
+        run: |
+          set -e
+          cd /tmp/space
+          git init -q -b main
+          git config user.email "deploy@43v3r.tech"
+          git config user.name "43v3r deploy"
+          git add -A
+          git commit -qm "Deploy ${GITHUB_SHA::7}"
+          git push --force "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE}" main

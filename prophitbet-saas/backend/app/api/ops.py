@@ -87,17 +87,19 @@ async def ops_tasks():
     return {"tasks": []}
 
 
-# Whitelisted, safe, repeatable pipeline jobs (the same Celery tasks as the Admin buttons).
-# Model training is deliberately NOT here: it changes the model, so it goes through LifeOS approvals.
-_COOLDOWN_S = 30 * 60
+# Whitelisted pipeline jobs (the same Celery tasks as the Admin buttons), run by LifeOS agents.
+# Heavy jobs get longer cooldowns so a looping agent cannot overload the worker.
+_COOLDOWN_S = {"sync-leagues": 6 * 3600, "train-house-models": 12 * 3600}
+_DEFAULT_COOLDOWN_S = 30 * 60
 _last_run: dict = {}
 
 
 def _cooldown(name: str) -> None:
     now = time.monotonic()
+    wait = _COOLDOWN_S.get(name, _DEFAULT_COOLDOWN_S)
     last = _last_run.get(name)
-    if last is not None and now - last < _COOLDOWN_S:
-        raise HTTPException(status_code=429, detail=f"{name} ran {round((now - last) / 60)} min ago; wait 30 min")
+    if last is not None and now - last < wait:
+        raise HTTPException(status_code=429, detail=f"{name} ran {round((now - last) / 60)} min ago; wait {round(wait / 60)} min between runs")
     _last_run[name] = now
 
 
@@ -116,7 +118,18 @@ async def _update_results():
     return {"job_id": update_match_results_task.delay().id, "message": "Match result update triggered"}
 
 
-ACTIONS: dict = {"scrape-fixtures": _scrape_fixtures, "generate-predictions": _generate_predictions, "update-results": _update_results}
+async def _sync_leagues():
+    from backend.app.workers.data_sync import sync_all_leagues_task
+    # Incremental: skips leagues synced in the last 20 h (no forced full re-sync from agents).
+    return {"job_id": sync_all_leagues_task.delay(force_resync=False, skip_if_synced_within_hours=20).id, "message": "League data sync triggered"}
+
+
+async def _train_house_models():
+    from backend.app.workers.train import train_house_models_task
+    return {"job_id": train_house_models_task.delay().id, "message": "House model training triggered"}
+
+
+ACTIONS: dict = {"sync-leagues": _sync_leagues, "train-house-models": _train_house_models, "scrape-fixtures": _scrape_fixtures, "generate-predictions": _generate_predictions, "update-results": _update_results}
 
 
 @router.post("/actions/{name}", dependencies=[Depends(require_ops_token)])
