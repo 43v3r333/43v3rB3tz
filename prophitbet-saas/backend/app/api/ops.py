@@ -87,11 +87,41 @@ async def ops_tasks():
     return {"tasks": []}
 
 
-ACTIONS: dict = {}  # whitelisted safe actions get added here; risky ones go through LifeOS approvals
+# Whitelisted, safe, repeatable pipeline jobs (the same Celery tasks as the Admin buttons).
+# Model training is deliberately NOT here: it changes the model, so it goes through LifeOS approvals.
+_COOLDOWN_S = 30 * 60
+_last_run: dict = {}
+
+
+def _cooldown(name: str) -> None:
+    now = time.monotonic()
+    last = _last_run.get(name)
+    if last is not None and now - last < _COOLDOWN_S:
+        raise HTTPException(status_code=429, detail=f"{name} ran {round((now - last) / 60)} min ago; wait 30 min")
+    _last_run[name] = now
+
+
+async def _scrape_fixtures():
+    from backend.app.workers.fixtures import scrape_all_fixtures_task
+    return {"job_id": scrape_all_fixtures_task.delay().id, "message": "Fixture scraping triggered"}
+
+
+async def _generate_predictions():
+    from backend.app.workers.predict import generate_daily_predictions_task
+    return {"job_id": generate_daily_predictions_task.delay().id, "message": "Prediction generation triggered"}
+
+
+async def _update_results():
+    from backend.app.workers.results import update_match_results_task
+    return {"job_id": update_match_results_task.delay().id, "message": "Match result update triggered"}
+
+
+ACTIONS: dict = {"scrape-fixtures": _scrape_fixtures, "generate-predictions": _generate_predictions, "update-results": _update_results}
 
 
 @router.post("/actions/{name}", dependencies=[Depends(require_ops_token)])
 async def ops_action(name: str):
     if name not in ACTIONS:
         raise HTTPException(status_code=404, detail={"error": "unknown action", "allowed": sorted(ACTIONS)})
+    _cooldown(name)
     return {"ok": True, "result": await ACTIONS[name]()}
