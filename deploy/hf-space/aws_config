@@ -1,6 +1,0 @@
-[default]
-# Backblaze B2 / any S3-compatible store: path-style URLs and SigV4.
-region = us-west-004
-s3 =
-    addressing_style = path
-    signature_version = s3v4
