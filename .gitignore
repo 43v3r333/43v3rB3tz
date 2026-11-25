@@ -25,3 +25,4 @@
 /prophitbet-saas/=
 /reports/.coverage*
 /reports/backend-coverage.xml
+prophitbet-saas/logs/
