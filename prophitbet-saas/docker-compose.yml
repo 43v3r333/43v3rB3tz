@@ -1,5 +1,6 @@
 services:
   system-checker:
+    profiles: ["monitoring"]
     build:
       context: ..
       dockerfile: code-jev-analyzer/Dockerfile.checker
@@ -135,6 +136,7 @@ services:
       celery -A backend.app.workers.celery_app worker --loglevel=info --concurrency=1 -Q data_sync
 
   domain-exporter:
+    profiles: ["monitoring"]
     <<: *ml-worker
     restart: unless-stopped
     command: python -m backend.app.monitoring_exporter
@@ -165,6 +167,7 @@ services:
       celery -A backend.app.workers.celery_app beat --loglevel=info
 
   frontend:
+    profiles: ["tools"]
     build:
       context: frontend
       dockerfile: Dockerfile
@@ -178,6 +181,7 @@ services:
     command: npm run start
 
   flower:
+    profiles: ["tools"]
     image: mher/flower:latest
     ports:
       - "5555:5555"
@@ -188,6 +192,7 @@ services:
       - redis
 
   adminer:
+    profiles: ["tools"]
     image: adminer:latest
     ports:
       - "8082:8080"
@@ -195,6 +200,7 @@ services:
       - postgres
 
   pgweb:
+    profiles: ["tools"]
     image: sosedoff/pgweb:latest
     restart: unless-stopped
     ports:
@@ -205,6 +211,7 @@ services:
       - postgres
 
   redis-commander:
+    profiles: ["tools"]
     image: rediscommander/redis-commander:latest
     environment:
       - REDIS_HOSTS=local:redis:6379
@@ -214,6 +221,7 @@ services:
       - redis
 
   prometheus:
+    profiles: ["monitoring"]
     image: prom/prometheus:v2.54.1
     container_name: prophitbet-prometheus
     restart: unless-stopped
@@ -232,6 +240,7 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
 
   loki-init:
+    profiles: ["monitoring"]
     image: busybox:1.37.0
     user: "0:0"
     entrypoint: ["chown"]
@@ -240,6 +249,7 @@ services:
       - loki_data:/loki
 
   loki:
+    profiles: ["monitoring"]
     image: grafana/loki:3.6.0
     restart: unless-stopped
     command: -config.file=/etc/loki/config.yml
@@ -251,6 +261,7 @@ services:
         condition: service_completed_successfully
 
   alloy:
+    profiles: ["monitoring"]
     image: grafana/alloy:v1.11.0
     restart: unless-stopped
     command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy /etc/alloy/config.alloy
@@ -264,6 +275,7 @@ services:
       - loki
 
   grafana:
+    profiles: ["monitoring"]
     image: grafana/grafana:11.2.0
     container_name: prophitbet-grafana
     restart: unless-stopped
@@ -282,6 +294,7 @@ services:
       - prometheus
 
   postgres-exporter:
+    profiles: ["monitoring"]
     image: prometheuscommunity/postgres-exporter:v0.15.0
     container_name: prophitbet-postgres-exporter
     restart: unless-stopped
@@ -294,6 +307,7 @@ services:
         condition: service_healthy
 
   redis-exporter:
+    profiles: ["monitoring"]
     image: oliver006/redis_exporter:v1.67.0
     container_name: prophitbet-redis-exporter
     restart: unless-stopped
@@ -308,6 +322,7 @@ services:
   # ── SonarQube Community Edition ──────────────────────────────────────────────
   # Web UI: http://localhost:9100  (admin / admin on first login)
   sonarqube:
+    profiles: ["tools", "scan"]
     image: sonarqube:community
     env_file:
       - ./monitoring/secrets/sonarqube.env
