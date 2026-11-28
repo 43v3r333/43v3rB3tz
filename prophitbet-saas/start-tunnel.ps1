@@ -6,6 +6,8 @@
     through it, then updates every env var on the Vercel project "43v3rb3tz" that still points at an old
     trycloudflare address (INTERNAL_API_URL, and NEXT_PUBLIC_API_URL if it does too) and redeploys production,
     so the site and LifeOS find the backend again within about 2 minutes.
+  - Every 5 min it also sends a heartbeat to LifeOS Mission Control (Docker + all containers, tunnel, free disk),
+    so LifeOS and the cloud agents can see the PC's local services. Needs LIFEOS_PC_TOKEN in .env (optional).
   - Needs VERCEL_TOKEN in prophitbet-saas\.env (never printed). Log: prophitbet-saas\logs\tunnel.log
 
   Run once by hand:   powershell -ExecutionPolicy Bypass -File .\start-tunnel.ps1
@@ -37,11 +39,15 @@ if ($Install) {
 
 # --- settings -------------------------------------------------------------------------------
 $envFile = Join-Path $Here ".env"
-$token = $null
-if (Test-Path $envFile) {
-  $m = Select-String -Path $envFile -Pattern '^\s*VERCEL_TOKEN\s*=\s*"?([^"\s]+)"?' | Select-Object -First 1
-  if ($m) { $token = $m.Matches[0].Groups[1].Value }
+function Read-EnvValue($name) {
+  if (-not (Test-Path $envFile)) { return $null }
+  $m = Select-String -Path $envFile -Pattern ('^\s*' + $name + '\s*=\s*"?([^"\s]+)"?') | Select-Object -First 1
+  if ($m) { return $m.Matches[0].Groups[1].Value } else { return $null }
 }
+$token   = Read-EnvValue "VERCEL_TOKEN"
+$pcToken = Read-EnvValue "LIFEOS_PC_TOKEN"
+$LifeOs  = "https://lifeos-five-cyan.vercel.app"
+$script:lastBeat = [DateTime]::MinValue
 if (-not $token) { Write-Log "ERROR: add VERCEL_TOKEN=... to $envFile (see the comment at the top of this script)"; exit 1 }
 
 $cf = (Get-Command cloudflared -ErrorAction SilentlyContinue).Source
@@ -87,10 +93,27 @@ function Update-Vercel($newUrl) {
   Write-Log "Vercel: production redeploy started ($($dep.id)); live in about 1-2 min"
 }
 
+# --- heartbeat to LifeOS Mission Control (every 5 min) -----------------------------------------
+function Send-Heartbeat($tunnelUrl, $tunnelOk) {
+  if (-not $pcToken) { return }
+  if (((Get-Date) - $script:lastBeat).TotalMinutes -lt 5) { return }
+  $script:lastBeat = Get-Date
+  try {
+    $containers = @()
+    $lines = & docker ps -a --filter "label=com.docker.compose.project" --format "{{.Names}}|{{.State}}|{{.Status}}" 2>$null
+    $dockerOk = ($LASTEXITCODE -eq 0)
+    foreach ($l in $lines) { $p = "$l".Split("|"); if ($p.Count -ge 3) { $containers += @{ name = $p[0]; state = $p[1]; status = $p[2] } } }
+    $free = [math]::Round(((Get-PSDrive -Name C).Free / 1GB), 1)
+    $body = @{ dockerOk = $dockerOk; containers = $containers; tunnelUrl = $tunnelUrl; tunnelOk = $tunnelOk; diskFreeGb = $free; host = $env:COMPUTERNAME } | ConvertTo-Json -Depth 4
+    Invoke-RestMethod -Method Post -Uri "$LifeOs/api/business/heartbeat" -Headers @{ Authorization = "Bearer $pcToken"; "Content-Type" = "application/json" } -Body $body -TimeoutSec 20 | Out-Null
+  } catch { Write-Log "Heartbeat to LifeOS failed: $($_.Exception.Message)" }
+}
+
 # --- main loop: run the tunnel forever --------------------------------------------------------
 Write-Log "Tunnel watchdog started"
 while ($true) {
-  if (-not (Wait-Url "$Local/health" 600)) { Write-Log "Backend not answering on $Local/health (is Docker running?). Retrying..."; continue }
+  Send-Heartbeat $null $null
+  if (-not (Wait-Url "$Local/health" 60)) { Write-Log "Backend not answering on $Local/health (is Docker running?). Retrying..."; continue }
 
   if (Test-Path $CfLog) { Remove-Item $CfLog -Force }
   $proc = Start-Process -FilePath $cf -ArgumentList @("tunnel", "--no-autoupdate", "--url", $Local, "--logfile", $CfLog) -WindowStyle Hidden -PassThru
@@ -114,7 +137,8 @@ while ($true) {
 
   while (-not $proc.HasExited) {
     Start-Sleep -Seconds 30
-    if ($url -and -not (Wait-Url "$url/health" 90)) { Write-Log "Tunnel stopped answering: restarting"; try { $proc.Kill() } catch { }; break }
+    if ($url -and -not (Wait-Url "$url/health" 90)) { Write-Log "Tunnel stopped answering: restarting"; Send-Heartbeat $url $false; try { $proc.Kill() } catch { }; break }
+    Send-Heartbeat $url $true
   }
   Write-Log "cloudflared exited; restarting in 10 s"
   Start-Sleep -Seconds 10
